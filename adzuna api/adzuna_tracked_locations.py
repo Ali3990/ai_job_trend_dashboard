@@ -15,6 +15,7 @@ app_key = os.getenv("adzuna_app_key")
 endpoint_url = "https://api.adzuna.com/v1/api/jobs/us/search"
 
 # Tracking the biggest AI hubs. Comment out states that were already completed
+# Current states being tracker: 48 (excluding Hawaii, Alaska)
 states = [
     "CA", "TX", "WA", "NY", "MA", "VA", "NC", "CO",
     "GA", "IL", "PA", "FL", "MD", "NJ", "AZ", "OR",
@@ -26,6 +27,7 @@ states = [
     "MT", "WY", "ID", "ND", "SD", "VT", "RI", "DE",
 ]
 
+# Current total terms: 17
 job_terms = [
     "machine learning",
     "artificial intelligence", "GenAI", "Generative AI",
@@ -61,8 +63,8 @@ fieldnames  = [
     "salary_max",
     "country",
     "state",
+    "county",
     "city",
-    "neighborhood",
     "lat",
     "lon",
     "search_state",
@@ -112,8 +114,8 @@ def flatten_job(job, search_state, search_term):
         "salary_max": job.get("salary_max"),
         "country": area[0] if len(area) > 0 else None,
         "state": area[1] if len(area) > 1 else None,
-        "city": area[2] if len(area) > 2 else None,
-        "neighborhood": area[3] if len(area) > 3 else None,
+        "county": area[2] if len(area) > 2 else None,
+        "city": area[3] if len(area) > 3 else None,
         "lat": job.get("latitude"),
         "lon": job.get("longitude"),
         "search_state": search_state,
