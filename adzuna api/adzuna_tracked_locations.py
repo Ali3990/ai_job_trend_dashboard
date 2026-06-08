@@ -14,17 +14,27 @@ app_key = os.getenv("adzuna_app_key")
 
 endpoint_url = "https://api.adzuna.com/v1/api/jobs/us/search"
 
+# Tracking the biggest AI hubs. Comment out states that were already completed
 states = [
     "CA", "TX", "WA", "NY", "MA", "VA", "NC", "CO",
-    "GA", "IL", "PA", "FL", "MD", "NJ", "AZ", "OR"
+    "GA", "IL", "PA", "FL", "MD", "NJ", "AZ", "OR",
+
+    "OH", "MI", "MN", "UT", "TN", "MO", "IN", "WI",
+    "CT", "NH", "ME", "NV", "NM", "SC", "AL", "KY",
+
+    "IA", "KS", "NE", "OK", "AR", "LA", "MS", "WV",
+    "MT", "WY", "ID", "ND", "SD", "VT", "RI", "DE",
 ]
 
 job_terms = [
     "machine learning",
-    "artificial intelligence",
+    "artificial intelligence", "GenAI", "Generative AI",
     "LLM", "large language models",
     "AI Engineer", "ML Engineer",
-    "Data Scientist", "Applied Scientist",
+    "Data Scientist", "Applied Scientist", "AI Research Scientist",
+    "Prompt engineering", "Vector Databases",
+    "AI Agents", "Mult-Agent Systems",
+    "RAG", "Retrieval Augmented GenAI"
 
     # "OpenAI", "Anthropic",
     # "Claude", "GPT", "Gemini",
@@ -32,7 +42,7 @@ job_terms = [
 
 # 25 results per min, 250 per day, 1k per month limit
 results_per_page = 25
-max_requests_per_day = 200
+max_requests_per_day = 250
 delay = 3
 
 OUTPUT_DIR = Path("job data")
