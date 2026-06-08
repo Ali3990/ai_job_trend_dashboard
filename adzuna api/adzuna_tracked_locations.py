@@ -14,7 +14,10 @@ APP_KEY = os.getenv("adzuna_app_key")
 
 BASE_URL = "https://api.adzuna.com/v1/api/jobs/us/search"
 
-STATES = ["CA", "WA", "OR", "TX", "NY"]
+states = [
+    "CA", "TX", "WA", "NY", "MA", "VA", "NC", "CO",
+    "GA", "IL", "PA", "FL", "MD", "NJ", "AZ", "OR"
+]
 
 JOB_TERMS = [
     "machine learning",
