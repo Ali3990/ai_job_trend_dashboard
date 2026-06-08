@@ -9,41 +9,37 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-APP_ID = os.getenv("adzuna_app_id")
-APP_KEY = os.getenv("adzuna_app_key")
+app_id = os.getenv("adzuna_app_id")
+app_key = os.getenv("adzuna_app_key")
 
-BASE_URL = "https://api.adzuna.com/v1/api/jobs/us/search"
+endpoint_url = "https://api.adzuna.com/v1/api/jobs/us/search"
 
 states = [
     "CA", "TX", "WA", "NY", "MA", "VA", "NC", "CO",
     "GA", "IL", "PA", "FL", "MD", "NJ", "AZ", "OR"
 ]
 
-JOB_TERMS = [
+job_terms = [
     "machine learning",
     "artificial intelligence",
-    "AI",
-    "AI Developer",
-    "AI Engineer",
-    "AI Research Scientist",
-    "LangChain",
-    "LLM",
-    "generative AI",
-    "RAG",
-    "AI Applied Scientist",
-    "reinforcement learning",
-    "natural language processing",
-    "NLP",
+    "LLM", "large language models",
+    "AI Engineer", "ML Engineer",
+    "Data Scientist", "Applied Scientist",
+
+    # "OpenAI", "Anthropic",
+    # "Claude", "GPT", "Gemini",
 ]
 
-RESULTS_PER_PAGE = 25
-MAX_REQUESTS_PER_DAY = 250
-SECONDS_BETWEEN_REQUESTS = 3
+# 25 results per min, 250 per day, 1k per month limit
+results_per_page = 25
+max_requests_per_day = 200
+delay = 3
 
-OUTPUT_FILE = "adzuna_ai_jobs.csv"
+OUTPUT_DIR = Path("job data")
+OUTPUT_FILE = OUTPUT_DIR / "adzuna_ai_jobs.csv"
 CHECKPOINT_FILE = "adzuna_checkpoint.json"
 
-FIELDNAMES = [
+fieldnames  = [
     "id",
     "created_timestamp",
     "title",
@@ -115,18 +111,42 @@ def flatten_job(job, search_state, search_term):
     }
 
 
-def fetch_page(state, term, page):
-    url = f"{BASE_URL}/{page}"
+def fetch_page(state, term, page, max_retries=2):
+    url = f"{endpoint_url}/{page}"
 
     params = {
-        "app_id": APP_ID,
-        "app_key": APP_KEY,
+        "app_id": app_id,
+        "app_key": app_key,
         "what": term,
         "where": state,
-        "results_per_page": RESULTS_PER_PAGE,
+        "results_per_page": results_per_page,
         "permanent": "1",
         "full_time": "1",
     }
+
+    for attempt in range(1, max_retries + 1):
+        response = requests.get(url, params=params, timeout=30)
+
+        print(
+            f"State={state} | Term={term} | Page={page} | "
+            f"Status={response.status_code} | Attempt={attempt}"
+        )
+
+        if response.status_code == 200:
+            return response.json()
+
+        if response.status_code in [429, 500, 502, 503, 504]:
+            wait_seconds = 10 * attempt
+            print(f"Retryable error. Waiting {wait_seconds} seconds...")
+            time.sleep(wait_seconds)
+            continue
+
+        print(response.text[:500])
+        response.raise_for_status()
+
+        raise RuntimeError(
+            f"Failed after {max_retries} retries: state={state}, term={term}, page={page}"
+        )
 
     response = requests.get(url, params=params, timeout=30)
 
@@ -161,7 +181,7 @@ def append_rows(rows):
     file_exists = Path(OUTPUT_FILE).exists()
 
     with open(OUTPUT_FILE, "a", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
 
         if not file_exists:
             writer.writeheader()
@@ -170,7 +190,7 @@ def append_rows(rows):
 
 
 def main():
-    if not APP_ID or not APP_KEY:
+    if not app_id or not app_key:
         raise ValueError("Missing or expired adzuna_app_id and/or adzuna_app_key.")
 
     checkpoint = load_checkpoint()
@@ -183,13 +203,13 @@ def main():
     request_count = 0
     new_rows_count = 0
 
-    for state_index in range(start_state_index, len(STATES)):
-        state = STATES[state_index]
+    for state_index in range(start_state_index, len(states)):
+        state = states[state_index]
 
         term_start = start_term_index if state_index == start_state_index else 0
 
-        for term_index in range(term_start, len(JOB_TERMS)):
-            term = JOB_TERMS[term_index]
+        for term_index in range(term_start, len(job_terms)):
+            term = job_terms[term_index]
 
             page = (
                 start_page
@@ -197,7 +217,7 @@ def main():
                 else 1
             )
 
-            while request_count < MAX_REQUESTS_PER_DAY:
+            while request_count < max_requests_per_day:
                 data = fetch_page(state, term, page)
                 request_count += 1
 
@@ -228,23 +248,23 @@ def main():
                 next_page = page + 1
                 save_checkpoint(state_index, term_index, next_page)
 
-                if page * RESULTS_PER_PAGE >= total_count:
+                if page * results_per_page >= total_count:
                     save_checkpoint(state_index, term_index + 1, 1)
                     break
 
                 page += 1
 
-                if request_count >= MAX_REQUESTS_PER_DAY:
+                if request_count >= max_requests_per_day:
                     break
 
-                time.sleep(SECONDS_BETWEEN_REQUESTS)
+                time.sleep(delay)
 
-            if request_count >= MAX_REQUESTS_PER_DAY:
+            if request_count >= max_requests_per_day:
                 print("Reached daily request limit.")
                 print(f"Resume checkpoint saved to {CHECKPOINT_FILE}.")
                 break
 
-        if request_count >= MAX_REQUESTS_PER_DAY:
+        if request_count >= max_requests_per_day:
             break
 
     print(f"New jobs saved this run: {new_rows_count}")
