@@ -28,19 +28,14 @@ states = [
     "MT", "WY", "ID", "ND", "SD", "VT", "RI", "DE",
 ]
 
-# Current total terms: 17
+# optimized keyword list
 job_terms = [
     "machine learning",
     "artificial intelligence", "GenAI", "Generative AI",
     "LLM", "large language models",
-    "AI Engineer", "ML Engineer",
-    "Data Scientist", "Applied Scientist", "AI Research Scientist",
-    "Prompt engineering", "Vector Databases",
-    "AI Agents", "Mult-Agent Systems",
-    "RAG", "Retrieval Augmented GenAI"
-
-    # "OpenAI", "Anthropic",
-    # "Claude", "GPT", "Gemini",
+    "AI Engineer", 
+    "OpenAI", "Anthropic",
+    "Claude Code", "Codex", "Gemini",
 ]
 
 # 25 results per min, 250 per day, 1k per month limit
