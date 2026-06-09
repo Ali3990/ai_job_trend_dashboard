@@ -6,6 +6,7 @@ from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
+from requests.exceptions import SSLError, ConnectionError, Timeout
 
 load_dotenv()
 
@@ -47,8 +48,8 @@ results_per_page = 25
 max_requests_per_day = 250
 delay = 3
 
-OUTPUT_DIR = Path("job data")
-OUTPUT_FILE = OUTPUT_DIR / "adzuna_ai_jobs.csv"
+OUTPUT_DIR = Path("data/raw")
+OUTPUT_FILE = OUTPUT_DIR / "adzuna_ai_jobs_v2.csv"
 CHECKPOINT_FILE = "adzuna_checkpoint.json"
 
 fieldnames  = [
@@ -137,28 +138,36 @@ def fetch_page(state, term, page, max_retries=2):
     }
 
     for attempt in range(1, max_retries + 1):
-        response = requests.get(url, params=params, timeout=30)
+        try:
+            response = requests.get(url, params=params, timeout=30)
 
-        print(
-            f"State={state} | Term={term} | Page={page} | "
-            f"Status={response.status_code} | Attempt={attempt}"
-        )
+            print(
+                f"State={state} | Term={term} | Page={page} | "
+                f"Status={response.status_code} | Attempt={attempt}"
+            )
 
-        if response.status_code == 200:
-            return response.json()
+            if response.status_code == 200:
+                return response.json()
 
-        if response.status_code in [429, 500, 502, 503, 504]:
-            wait_seconds = 10 * attempt
-            print(f"Retryable error. Waiting {wait_seconds} seconds...")
-            time.sleep(wait_seconds)
-            continue
+            if response.status_code in [429, 500, 502, 503, 504]:
+                wait_seconds = 2 ** attempt
+                print(f"Retryable HTTP error. Waiting {wait_seconds} seconds...")
+                
+                time.sleep(wait_seconds)
+                continue
 
-        print(response.text[:500])
-        response.raise_for_status()
+            response.raise_for_status()
 
-        raise RuntimeError(
-            f"Failed after {max_retries} retries: state={state}, term={term}, page={page}"
-        )
+        except (SSLError, ConnectionError, Timeout) as e:
+            wait_seconds = 2 ** attempt
+            print(f"Network/SSL error on attempt {attempt}/{max_retries}: {e}")
+
+            if attempt < max_retries:
+                print(f"Retrying in {wait_seconds} seconds...")
+                time.sleep(wait_seconds)
+                continue
+
+            raise RuntimeError(f"Failed after {max_retries} retries: state={state}, term={term}, page={page}")
 
     response = requests.get(url, params=params, timeout=30)
 
