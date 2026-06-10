@@ -67,7 +67,7 @@ fieldnames  = [
     "search_term",
 ]
 
-
+# Save point on state, search term, and page number. Restarts at beginning after reaching the last loop.
 def load_checkpoint():
     if Path(CHECKPOINT_FILE).exists():
         with open(CHECKPOINT_FILE, "r", encoding="utf-8") as file:
