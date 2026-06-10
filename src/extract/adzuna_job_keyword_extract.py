@@ -34,8 +34,8 @@ job_terms = [
     "artificial intelligence", "GenAI", "Generative AI",
     "LLM", "large language models",
     "AI Engineer", 
-    # "OpenAI", "Anthropic",
-    # "Claude Code", "Codex", "Gemini",
+    "OpenAI", "Anthropic",
+    "Claude Code", "Codex", "Gemini",
 ]
 
 # 25 results per min, 250 per day, 1k per month limit
