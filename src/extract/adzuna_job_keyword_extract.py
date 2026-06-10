@@ -15,6 +15,8 @@ app_key = os.getenv("adzuna_app_key")
 
 endpoint_url = "https://api.adzuna.com/v1/api/jobs/us/search"
 
+# Note: Find all IT-jobs in category, then sift through the list to find those that are AI related. 
+
 # Tracking the biggest AI hubs. Comment out states that were already completed
 # Current states being tracker: 48 (excluding Hawaii, Alaska)
 states = [
@@ -30,12 +32,16 @@ states = [
 
 # optimized keyword list
 job_terms = [
-    "AI machine learning",
+    "AI machine learning", "machine learning"
     "artificial intelligence", "GenAI", "Generative AI",
     "LLM", "large language models",
     "AI Engineer", 
     "OpenAI", "Anthropic",
-    "Claude Code", "Codex", "Gemini",
+    "Cloud Computing",
+    "Cybersecurity",
+    "Data Engineering",
+    "MLOps",
+    "DevOps",
 ]
 
 # 25 results per min, 250 per day, 1k per month limit
