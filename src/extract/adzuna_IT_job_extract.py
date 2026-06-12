@@ -30,28 +30,18 @@ states = [
     "MT", "WY", "ID", "ND", "SD", "VT", "RI", "DE",
 ]
 
-# optimized keyword list
-job_terms = [
-    "AI machine learning", "machine learning"
-    "artificial intelligence", "GenAI", "Generative AI",
-    "LLM", "large language models",
-    "AI Engineer", 
-    "OpenAI", "Anthropic",
-    "Cloud Computing",
-    "Cybersecurity",
-    "Data Engineering",
-    "MLOps",
-    "DevOps",
-]
+# The category parameter for industry type
+search_category = "it-jobs"
 
-# 25 results per min, 250 per day, 1k per month limit
-results_per_page = 25
-max_requests_per_day = 1000
-delay = 3
+# 25 pull requests per min, 250 per day, 1k per month limit
+results_per_page = 50
+max_requests_per_day = 250
+delay = 2.5
 
-OUTPUT_DIR = Path("data/raw")
-OUTPUT_FILE = OUTPUT_DIR / "adzuna_ai_jobs_v2.csv"
-CHECKPOINT_FILE = "adzuna_checkpoint.json"
+# Output paths
+output_dir = Path("data/raw")
+output_file = output_dir / "adzuna_it_jobs.csv"
+checkpoint_file = "adzuna_it_checkpoint.json"
 
 fieldnames  = [
     "id",
@@ -70,13 +60,13 @@ fieldnames  = [
     "lat",
     "lon",
     "search_state",
-    "search_term",
+    "search_category",
 ]
 
-# Save point on state, search term, and page number. Restarts at beginning after reaching the last loop.
+# Save point on state, search term, and page number. 
 def load_checkpoint():
-    if Path(CHECKPOINT_FILE).exists():
-        with open(CHECKPOINT_FILE, "r", encoding="utf-8") as file:
+    if checkpoint_file.exists():
+        with open(checkpoint_file, "r", encoding="utf-8") as file:
             return json.load(file)
 
     return {
@@ -86,18 +76,17 @@ def load_checkpoint():
     }
 
 
-def save_checkpoint(state_index, term_index, page):
+def save_checkpoint(state_index, page):
     checkpoint = {
         "state_index": state_index,
-        "term_index": term_index,
         "page": page,
     }
 
-    with open(CHECKPOINT_FILE, "w", encoding="utf-8") as file:
+    with open(checkpoint_file, "w", encoding="utf-8") as file:
         json.dump(checkpoint, file, indent=2)
 
 
-def flatten_job(job, search_state, search_term):
+def flatten_job(job, search_state, search_category):
     location = job.get("location") or {}
     area = location.get("area") or []
 
@@ -121,7 +110,7 @@ def flatten_job(job, search_state, search_term):
         "lat": job.get("latitude"),
         "lon": job.get("longitude"),
         "search_state": search_state,
-        "search_term": search_term,
+        "search_category": search_category,
     }
 
 
@@ -185,12 +174,12 @@ def fetch_page(state, term, page, max_retries=2):
 
 
 def load_existing_ids():
-    if not Path(OUTPUT_FILE).exists():
+    if not Path(output_file).exists():
         return set()
 
     existing_ids = set()
 
-    with open(OUTPUT_FILE, "r", newline="", encoding="utf-8") as file:
+    with open(output_file, "r", newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         for row in reader:
             if row.get("id"):
@@ -200,9 +189,9 @@ def load_existing_ids():
 
 
 def append_rows(rows):
-    file_exists = Path(OUTPUT_FILE).exists()
+    file_exists = Path(output_file).exists()
 
-    with open(OUTPUT_FILE, "a", newline="", encoding="utf-8") as file:
+    with open(output_file, "a", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
 
         if not file_exists:
