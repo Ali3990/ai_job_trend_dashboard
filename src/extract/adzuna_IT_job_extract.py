@@ -114,17 +114,17 @@ def flatten_job(job, search_state, search_category):
     }
 
 
-def fetch_page(state, term, page, max_retries=2):
+def fetch_page(state, search_category, page, max_retries=2):
     url = f"{endpoint_url}/{page}"
 
     params = {
         "app_id": app_id,
         "app_key": app_key,
-        "what": term,
         "where": state,
         "results_per_page": results_per_page,
         "permanent": "1",
         "full_time": "1",
+        "category": search_category
     }
 
     for attempt in range(1, max_retries + 1):
@@ -132,7 +132,7 @@ def fetch_page(state, term, page, max_retries=2):
             response = requests.get(url, params=params, timeout=30)
 
             print(
-                f"State={state} | Term={term} | Page={page} | "
+                f"State={state} | Category:{search_category} | Page={page} | "
                 f"Status={response.status_code} | Attempt={attempt}"
             )
 
@@ -141,37 +141,24 @@ def fetch_page(state, term, page, max_retries=2):
 
             if response.status_code in [429, 500, 502, 503, 504]:
                 wait_seconds = 2 ** attempt
-                print(f"Retryable HTTP error. Waiting {wait_seconds} seconds...")
-                
+                print(f"Retryable error. Waiting {wait_seconds} seconds...")
                 time.sleep(wait_seconds)
                 continue
-
+            
+            print(response.text[:500])
             response.raise_for_status()
 
         except (SSLError, ConnectionError, Timeout) as e:
             wait_seconds = 2 ** attempt
-            print(f"Network/SSL error on attempt {attempt}/{max_retries}: {e}")
+            print(f"Network/SSL error {e}")
 
             if attempt < max_retries:
                 print(f"Retrying in {wait_seconds} seconds...")
                 time.sleep(wait_seconds)
                 continue
 
-            raise RuntimeError(f"Failed after {max_retries} retries: state={state}, term={term}, page={page}")
-
-    response = requests.get(url, params=params, timeout=30)
-
-    print(
-        f"State={state} | Term={term} | Page={page} | "
-        f"Status={response.status_code}"
-    )
-
-    if response.status_code != 200:
-        print(response.text[:500])
-
-    response.raise_for_status()
-    return response.json()
-
+            raise RuntimeError(f"Failed after {max_retries} retries: state={state}, page={page}")
+        
 
 def load_existing_ids():
     if not Path(output_file).exists():
@@ -202,86 +189,69 @@ def append_rows(rows):
 
 def main():
     if not app_id or not app_key:
-        raise ValueError("Missing or expired adzuna_app_id and/or adzuna_app_key.")
+        raise ValueError("Missing or expired adzun app_id and/or app_key.")
 
     checkpoint = load_checkpoint()
 
     start_state_index = checkpoint["state_index"]
-    start_term_index = checkpoint["term_index"]
     start_page = checkpoint["page"]
+
+    print(f"Resuming from state={states[start_state_index]} and page={start_page}")
 
     seen_ids = load_existing_ids()
     request_count = 0
     new_rows_count = 0
 
     for state_index in range(start_state_index, len(states)):
-        state = states[state_index]
+        state = states[state_index] # injects state position in 'states' list.
 
-        term_start = start_term_index if state_index == start_state_index else 0
+        page = start_page if state_index == start_state_index else 1
 
-        for term_index in range(term_start, len(job_terms)):
-            term = job_terms[term_index]
+        while request_count < max_requests_per_day:
+            data = fetch_page(state, page)
+            request_count += 1
 
-            page = (
-                start_page
-                if state_index == start_state_index and term_index == start_term_index
-                else 1
-            )
+            results = data.get("results", [])
+            total_count = data.get("count", 0)
 
-            while request_count < max_requests_per_day:
-                data = fetch_page(state, term, page)
-                request_count += 1
+            print(f"Total available for {state} / {search_category}: {total_count}")
 
-                results = data.get("results", [])
-                total_count = data.get("count", 0)
-
-                print(f"Total available for {state} / {term}: {total_count}")
-
-                if not results:
-                    save_checkpoint(state_index, term_index + 1, 1)
-                    break
-
-                rows_to_write = []
-
-                for job in results:
-                    job_id = job.get("id")
-
-                    if not job_id or job_id in seen_ids:
-                        continue
-
-                    seen_ids.add(job_id)
-                    rows_to_write.append(flatten_job(job, state, term))
-
-                if rows_to_write:
-                    append_rows(rows_to_write)
-                    new_rows_count += len(rows_to_write)
-
-                next_page = page + 1
-                save_checkpoint(state_index, term_index, next_page)
-
-                if page * results_per_page >= total_count:
-                    save_checkpoint(state_index, term_index + 1, 1)
-                    break
-
-                page += 1
-
-                if request_count >= max_requests_per_day:
-                    break
-
-                time.sleep(delay)
-
-            if request_count >= max_requests_per_day:
-                print("Reached daily request limit.")
-                print(f"Resume checkpoint saved to {CHECKPOINT_FILE}.")
+            if not results:
+                save_checkpoint(state_index + 1, 1)
                 break
 
+            rows_to_write = []
+
+            for job in results:
+                job_id = job.get("id")
+
+                if not job_id or job_id in seen_ids:
+                    continue
+
+                seen_ids.add(job_id)
+                rows_to_write.append(flatten_job(job, state))
+
+            if rows_to_write:
+                append_rows(rows_to_write)
+                new_rows_count += len(rows_to_write)
+
+            save_checkpoint(state_index, page + 1)
+
+            if page * results_per_page >= total_count:
+                save_checkpoint(state_index + 1, 1)
+                break
+
+            page += 1
+            time.sleep(delay)
+
         if request_count >= max_requests_per_day:
+            print("Reached request limit for this run.")
             break
 
     print(f"New jobs saved this run: {new_rows_count}")
     print(f"Requests used this run: {request_count}")
-    print(f"Output file: {OUTPUT_FILE}")
-    print(f"Checkpoint file: {CHECKPOINT_FILE}")
+    print(f"Output file: {output_file}")
+    print(f"Checkpoint file: {checkpoint_file}")
 
 
 if __name__ == "__main__":
