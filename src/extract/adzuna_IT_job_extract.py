@@ -41,7 +41,7 @@ delay = 2.5
 # Output paths
 output_dir = Path("data/raw")
 output_file = output_dir / "adzuna_it_jobs.csv"
-checkpoint_file = "adzuna_it_checkpoint.json"
+checkpoint_file = Path("adzuna_it_checkpoint.json")
 
 fieldnames  = [
     "id",
@@ -86,7 +86,7 @@ def save_checkpoint(state_index, page):
         json.dump(checkpoint, file, indent=2)
 
 
-def flatten_job(job, search_state, search_category):
+def flatten_job(job, search_state):
     location = job.get("location") or {}
     area = location.get("area") or []
 
@@ -114,7 +114,7 @@ def flatten_job(job, search_state, search_category):
     }
 
 
-def fetch_page(state, search_category, page, max_retries=2):
+def fetch_page(state, page, max_retries=2):
     url = f"{endpoint_url}/{page}"
 
     params = {
