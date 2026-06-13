@@ -85,6 +85,13 @@ def save_checkpoint(state_index, page):
     with open(checkpoint_file, "w", encoding="utf-8") as file:
         json.dump(checkpoint, file, indent=2)
 
+def reset_checkpoint(state_index, page):
+    if state_index >= len(states):
+        print("Reached the end of the list. Checkpoint resetting..")
+        save_checkpoint(0, 1)
+    else:
+        save_checkpoint(state_index, page)
+
 
 def flatten_job(job, search_state):
     location = job.get("location") or {}
@@ -196,6 +203,12 @@ def main():
     start_state_index = checkpoint["state_index"]
     start_page = checkpoint["page"]
 
+    if start_state_index >= len(states):
+        print("Checkpoint was past the final state. Resetting to beginning.")
+        save_checkpoint(0, 1)
+        start_state_index = 0
+        start_page = 1
+
     print(f"Resuming from state={states[start_state_index]} and page={start_page}")
 
     seen_ids = load_existing_ids()
@@ -217,7 +230,7 @@ def main():
             print(f"Total available for {state} / {search_category}: {total_count}")
 
             if not results:
-                save_checkpoint(state_index + 1, 1)
+                reset_checkpoint(state_index + 1, 1)
                 break
 
             rows_to_write = []
@@ -238,7 +251,7 @@ def main():
             save_checkpoint(state_index, page + 1)
 
             if page * results_per_page >= total_count:
-                save_checkpoint(state_index + 1, 1)
+                reset_checkpoint(state_index + 1, 1)
                 break
 
             page += 1
