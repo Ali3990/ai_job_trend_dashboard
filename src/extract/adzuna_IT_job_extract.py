@@ -15,7 +15,7 @@ app_key = os.getenv("adzuna_app_key")
 
 endpoint_url = "https://api.adzuna.com/v1/api/jobs/us/search"
 
-# Find all IT-jobs in category, then sift through the list to find those that are AI related. 
+# Find all IT-jobs in category, then sift through the list to find those that are strictly AI related. 
 
 # Tracking the biggest AI hubs. Comment out states that were already completed
 # Current states being tracker: 48 (excluding Hawaii, Alaska)
@@ -41,7 +41,7 @@ delay = 2.5
 # Output paths
 output_dir = Path("data/raw")
 output_file = output_dir / "adzuna_it_jobs.csv"
-checkpoint_file = Path("adzuna_it_checkpoint.json")
+checkpoint_file = Path("src/extract/adzuna_it_checkpoint.json")
 
 fieldnames  = [
     "id",
