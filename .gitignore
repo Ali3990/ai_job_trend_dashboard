@@ -1,2 +1,17 @@
 .env
 .venv
+
+# Airflow
+/airflow/logs
+airflow/plugins/__pycache__/
+airflow/config/airflow.cfg
+airflow/standalone_admin_password.txt
+
+# Airflow metadata / local runtime
+*.db
+airflow.db
+webserver_config.py
+
+# Docker
+docker-compose.override.yml
+
