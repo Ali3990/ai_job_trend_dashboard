@@ -147,7 +147,7 @@ def fetch_page(state, page, max_retries=2):
                 return response.json()
 
             if response.status_code in [429, 500, 502, 503, 504]:
-                wait_seconds = 2 ** attempt
+                wait_seconds = 5 ** attempt
                 print(f"Retryable error. Waiting {wait_seconds} seconds...")
                 time.sleep(wait_seconds)
                 continue
@@ -156,7 +156,7 @@ def fetch_page(state, page, max_retries=2):
             response.raise_for_status()
 
         except (SSLError, ConnectionError, Timeout) as e:
-            wait_seconds = 2 ** attempt
+            wait_seconds = 5 ** attempt
             print(f"Network/SSL error {e}")
 
             if attempt < max_retries:
