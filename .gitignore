@@ -15,3 +15,5 @@ webserver_config.py
 # Docker
 docker-compose.override.yml
 
+# DAGs
+__pycache__
