@@ -14,10 +14,10 @@ with DAG(
     default_args=default_args,
     description="Extract IT jobs from Adzuna API, classify AI-related roles, and stage data for Postgres loading.",
     schedule="@weekly",
-    start_date=datetime(2025, 1, 1),
+    start_date=datetime(2026, 6, 15),
     catchup=False,
     max_active_runs=1,
-    tags=["adzuna", "etl"],
+    tags=["adzuna", "etl", "railway postgres"],
 ) as dag:
 
     extract = BashOperator(
