@@ -32,9 +32,13 @@ states = [
 
 # optimized keyword list
 job_terms = [
-    "AI machine learning", "machine learning"
-    "artificial intelligence", "GenAI", "Generative AI",
-    "LLM", "large language models",
+    "AI machine learning", 
+    "machine learning",
+    "artificial intelligence", 
+    "GenAI", 
+    "Generative AI",
+    "LLM", 
+    "large language models",
     "AI Engineer", 
     "OpenAI", "Anthropic",
     "Cloud Computing",
@@ -50,7 +54,7 @@ max_requests_per_day = 1000
 delay = 3
 
 OUTPUT_DIR = Path("data/raw")
-OUTPUT_FILE = OUTPUT_DIR / "adzuna_ai_jobs_v2.csv"
+OUTPUT_FILE = OUTPUT_DIR / "adzuna_AI_jobs.csv"
 CHECKPOINT_FILE = "adzuna_checkpoint.json"
 
 fieldnames  = [
