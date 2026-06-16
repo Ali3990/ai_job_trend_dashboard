@@ -15,20 +15,20 @@ def main():
     if not db_url:
         raise ValueError("Database public URL is missing or incorrect.")
     
-    with psycopg2.connect(db_url) as conn:
-       cur = conn.cursor()
-       cur.execute("TRUNCATE TABLE adzuna_it_jobs")
-       cols = ", ".join(df.columns)
-       sql = f"INSERT INTO adzuna_it_jobs ({cols}) VALUES %s"
-       rows = [tuple(row) for row in df.itertuples(index=False)]
+    conn = psycopg2.connect(db_url)
+    cur = conn.cursor()
+    cur.execute("TRUNCATE TABLE adzuna_it_jobs")
+    cols = ", ".join(df.columns)
+    sql = f"INSERT INTO adzuna_it_jobs ({cols}) VALUES %s"
+    rows = [tuple(row) for row in df.itertuples(index=False)]
 
-       psycopg2.extras.execute_values(cur, sql, rows, page_size=500)
+    psycopg2.extras.execute_values(cur, sql, rows, page_size=500)
 
-       conn.commit()
-       cur.close()
-       conn.close()
+    conn.commit()
+    cur.close()
+    conn.close()
 
-       print(f"Loaded {len(df)} rows into 'adzuna_it_jobs' table.")
+    print(f"Loaded {len(df)} rows into 'adzuna_it_jobs' table.")
 
 if __name__ =="__main__":
     main()
