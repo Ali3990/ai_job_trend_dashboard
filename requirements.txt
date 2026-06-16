@@ -3,3 +3,8 @@ psycopg2-binary>=2.9.12
 python-dotenv>=1.2.2
 requests>=2.34.2
 sqlalchemy>=2.0.51
+
+streamlit>=1.45.0
+plotly>=6.0.0
+
+
