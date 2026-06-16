@@ -2,8 +2,8 @@ import pandas as pd
 import re
 from pathlib import Path
 
-input_file = Path("data\\raw\\adzuna_it_jobs.csv")
-output_file = Path("data\\processed\\adzuna_it_jobs_ai_classified.csv")
+input_file = Path("data/raw/adzuna_it_jobs.csv")
+output_file = Path("data/processed/adzuna_it_jobs_ai_classified.csv")
 
 output_file.parent.mkdir(parents=True, exist_ok=True)
 
