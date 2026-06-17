@@ -10,7 +10,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id="migration_zcta_load",
+    dag_id="placer_migration_zcta_load",
     default_args=default_args,
     description="Bulk load of Placer.ai ZCTA net migration data into Postgres.",
     schedule=None,
