@@ -4,7 +4,8 @@ python-dotenv>=1.2.2
 requests>=2.34.2
 sqlalchemy>=2.0.51
 
-streamlit>=1.45.0
+dash>=2.14.0
+dash-bootstrap-components>=1.6.0
+flask-caching>=2.3.0
 plotly>=6.0.0
-
-
+gunicorn>=21.2.0
