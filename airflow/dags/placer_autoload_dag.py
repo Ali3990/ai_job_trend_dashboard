@@ -31,7 +31,7 @@ with DAG(
     wait_for_trigger = PythonSensor(
         task_id="wait_for_trigger_file",
         python_callable=_trigger_file_exists,
-        poke_interval=60,
+        poke_interval=60, #poke 4 times each minute
         timeout=240,
         mode="reschedule",
         soft_fail=True,
