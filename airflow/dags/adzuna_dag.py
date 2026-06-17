@@ -37,7 +37,7 @@ with DAG(
 
     load = BashOperator(
         task_id="load_data_to_postgres",
-        bash_command=f"cd {PROJECT_DIR} && python src/load/load_to_postgres.py"
+        bash_command=f"cd {PROJECT_DIR} && python src/load/load_adzuna_postgres.py"
     )
 
     extract >> classify >> stage >> load
