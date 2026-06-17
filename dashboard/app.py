@@ -1,6 +1,6 @@
 import os
-import psycopg2
 import pandas as pd
+from sqlalchemy import create_engine
 import plotly.express as px
 from dotenv import load_dotenv
 from dash import Dash, dcc, html, Input, Output, State
@@ -17,9 +17,10 @@ cache = Cache(server, config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOU
 
 @cache.memoize(timeout=3600)
 def load_data():
-    conn = psycopg2.connect(os.getenv("DATABASE_PUBLIC_URL"))
-    df = pd.read_sql("SELECT * FROM adzuna_it_jobs;", conn)
-    conn.close()
+    db_url = os.getenv("DATABASE_PUBLIC_URL").replace("postgresql://", "postgresql+psycopg2://", 1)
+    engine = create_engine(db_url)
+    df = pd.read_sql("SELECT * FROM adzuna_it_jobs;", engine)
+    engine.dispose()
     df["month_year"] = pd.to_datetime(df["month_year"])
     return df
 
